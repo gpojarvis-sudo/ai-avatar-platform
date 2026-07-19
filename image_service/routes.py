@@ -42,15 +42,18 @@ class ImageRequest(BaseModel):
     )
 
     provider: str = Field(
-        default="huggingface",
+        default="cloudflare",
+        description="cloudflare | huggingface | gemini | nvidia",
     )
 
     model: str = Field(
-        default="flux-dev",
+        default="pruna/p-image",
+        description="Cloudflare Workers AI model",
     )
 
     extension: str = Field(
         default="png",
+        description="png | jpg | jpeg | webp",
     )
 
 
