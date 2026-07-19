@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class BaseImageProvider(ABC):
     """
     Base class for all image generation providers.
-    Every provider must implement generate().
+
+    Every provider must implement generate() and return
+    a standardized response dictionary.
     """
 
     name = "base"
@@ -20,11 +22,21 @@ class BaseImageProvider(ABC):
         Generate an image from a prompt.
 
         Returns:
-            {
-                "success": True/False,
-                "provider": "...",
-                "image_url": "...",
-                "error": None
-            }
+
+        Success:
+        {
+            "success": True,
+            "provider": "huggingface",
+            "model": "black-forest-labs/FLUX.1-schnell",
+            "image_bytes": b"..."
+        }
+
+        Failure:
+        {
+            "success": False,
+            "provider": "huggingface",
+            "model": "black-forest-labs/FLUX.1-schnell",
+            "error": "Reason for failure"
+        }
         """
         pass
