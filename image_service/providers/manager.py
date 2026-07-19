@@ -5,38 +5,62 @@ from .gemini import GeminiProvider
 
 class ImageProviderManager:
     """
-    Manages all available image providers.
+    Production Image Provider Manager
     """
 
     def __init__(self):
-        self.providers = [
-            HuggingFaceProvider(),
-            NvidiaProvider(),
-            GeminiProvider(),
-        ]
 
-    async def generate(self, prompt: str, **kwargs):
-        """
-        Try each provider until one succeeds.
-        """
-
-        last_result = {
-            "success": False,
-            "provider": None,
-            "image_url": None,
-            "error": "No provider available."
+        self.providers = {
+            "huggingface": HuggingFaceProvider(),
+            "nvidia": NvidiaProvider(),
+            "gemini": GeminiProvider(),
         }
 
-        for provider in self.providers:
+        self.fallback_order = [
+            "huggingface",
+            "nvidia",
+            "gemini",
+        ]
 
-            result = await provider.generate(
+    async def generate(
+        self,
+        prompt: str,
+        provider: str = "huggingface",
+        **kwargs,
+    ):
+
+        # Try requested provider first
+        if provider in self.providers:
+
+            result = await self.providers[
+                provider
+            ].generate(
                 prompt=prompt,
-                **kwargs
+                **kwargs,
             )
 
             if result.get("success"):
                 return result
 
-            last_result = result
+        # Automatic fallback
+        for provider_name in self.fallback_order:
 
-        return last_result
+            if provider_name == provider:
+                continue
+
+            result = await self.providers[
+                provider_name
+            ].generate(
+                prompt=prompt,
+                **kwargs,
+            )
+
+            if result.get("success"):
+                return result
+
+        return {
+            "success": False,
+            "provider": provider,
+            "model": None,
+            "error": "All image providers failed."
+        }
