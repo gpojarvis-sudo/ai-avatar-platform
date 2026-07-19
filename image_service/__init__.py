@@ -1,7 +1,5 @@
-"""
-Image Service package.
-"""
+from .routes import router
 
-from .service import image_service
-
-__all__ = ["image_service"]
+__all__ = [
+    "router",
+]
