@@ -81,3 +81,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+print("ACCOUNT:", settings.CLOUDFLARE_ACCOUNT_ID)
+print("TOKEN LENGTH:", len(settings.CLOUDFLARE_API_TOKEN))
+print("MODEL:", settings.CLOUDFLARE_IMAGE_MODEL)
+print("DEFAULT:", settings.DEFAULT_IMAGE_PROVIDER)
