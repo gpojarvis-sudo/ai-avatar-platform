@@ -16,7 +16,13 @@ class HuggingFaceProvider(BaseImageProvider):
         self.base_url = settings.HUGGINGFACE_BASE_URL
         self.model = settings.HUGGINGFACE_MODEL
         self.timeout = settings.HUGGINGFACE_TIMEOUT
-
+if not self.api_key:
+    return {
+        "success": False,
+        "provider": self.name,
+        "image_url": None,
+        "error": "Hugging Face API key is not configured."
+    }
     async def generate(self, prompt: str, **kwargs):
         """
         Hugging Face provider.
@@ -30,3 +36,4 @@ class HuggingFaceProvider(BaseImageProvider):
             "image_url": None,
             "error": "HTTP request not implemented yet."
         }
+from typing import Dict, Any
