@@ -1,43 +1,72 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from image_service.service import image_service
-
+from image_service.service import ImageService
 
 router = APIRouter(
-    prefix="/image",
+    prefix="/api/v1/image",
     tags=["Image Generation"],
 )
 
+service = ImageService()
+
 
 class ImageRequest(BaseModel):
+
     prompt: str = Field(
         ...,
-        min_length=3,
-        description="Prompt for image generation",
+        min_length=5,
+        max_length=5000,
+        description="Image prompt",
+    )
+
+    negative_prompt: str = Field(
+        default="",
+        max_length=2000,
+        description="Negative prompt",
+    )
+
+    aspect_ratio: str = Field(
+        default="1:1",
+        description="1:1 | 9:16 | 16:9 | 4:5 | 3:2",
+    )
+
+    quality: str = Field(
+        default="balanced",
+        description="fast | balanced | ultra",
+    )
+
+    seed: int | None = Field(
+        default=None,
+        description="Optional random seed",
     )
 
     provider: str = Field(
         default="huggingface",
-        description="Image Provider",
+    )
+
+    model: str = Field(
+        default="flux-dev",
     )
 
     extension: str = Field(
         default="png",
-        description="Output Image Format",
     )
 
 
 @router.post("/generate")
-async def generate_image(
-    request: ImageRequest,
-):
+async def generate_image(request: ImageRequest):
 
     try:
 
-        result = await image_service.generate(
+        result = await service.generate(
             prompt=request.prompt,
+            negative_prompt=request.negative_prompt,
+            aspect_ratio=request.aspect_ratio,
+            quality=request.quality,
+            seed=request.seed,
             provider=request.provider,
+            model=request.model,
             extension=request.extension,
         )
 
