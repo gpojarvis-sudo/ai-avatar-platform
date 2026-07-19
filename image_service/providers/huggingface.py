@@ -1,8 +1,8 @@
 import httpx
-
+from pathlib import Path
 from config.settings import settings
 from .base import BaseImageProvider
-
+from typing import Dict, Any
 
 class HuggingFaceProvider(BaseImageProvider):
     """
@@ -16,6 +16,8 @@ class HuggingFaceProvider(BaseImageProvider):
         self.base_url = settings.HUGGINGFACE_BASE_URL
         self.model = settings.HUGGINGFACE_MODEL
         self.timeout = settings.HUGGINGFACE_TIMEOUT
+        self.image_dir = Path("static/images")
+        self.image_dir.mkdir(parents=True, exist_ok=True)
 if not self.api_key:
     return {
         "success": False,
@@ -36,4 +38,4 @@ if not self.api_key:
             "image_url": None,
             "error": "HTTP request not implemented yet."
         }
-from typing import Dict, Any
+
