@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     CLOUDFLARE_API_TOKEN: str = ""
 
-    CLOUDFLARE_IMAGE_MODEL=pruna/p-image
+    CLOUDFLARE_IMAGE_MODEL: str = "pruna/p-image"
 
     CLOUDFLARE_TIMEOUT: int = 180
 
