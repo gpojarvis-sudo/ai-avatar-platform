@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from image_service.service import ImageService
 
 router = APIRouter(
-    prefix="/api/v1/image",
+    prefix="/image",
     tags=["Image Generation"],
 )
 
