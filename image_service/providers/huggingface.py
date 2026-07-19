@@ -1,5 +1,6 @@
 import httpx
 from typing import Any, Dict
+from loguru import logger
 
 from config.settings import settings
 from .base import BaseImageProvider
@@ -25,6 +26,8 @@ class HuggingFaceProvider(BaseImageProvider):
     ) -> Dict[str, Any]:
 
         if not self.api_key:
+            logger.error("HUGGINGFACE_API_KEY is missing.")
+
             return {
                 "success": False,
                 "provider": self.name,
@@ -46,6 +49,9 @@ class HuggingFaceProvider(BaseImageProvider):
             }
         }
 
+        logger.info(f"Using HuggingFace model : {self.model}")
+        logger.info(f"Endpoint : {url}")
+
         try:
 
             async with httpx.AsyncClient(
@@ -58,7 +64,32 @@ class HuggingFaceProvider(BaseImageProvider):
                     json=payload,
                 )
 
+            logger.info(f"HTTP Status : {response.status_code}")
+            logger.info(
+                f"Content-Type : {response.headers.get('content-type')}"
+            )
+
             if response.status_code != 200:
+
+                logger.error("Hugging Face returned non-200 response.")
+                logger.error(response.text)
+
+                return {
+                    "success": False,
+                    "provider": self.name,
+                    "model": self.model,
+                    "error": f"HTTP {response.status_code}: {response.text}",
+                }
+
+            content_type = response.headers.get(
+                "content-type",
+                ""
+            ).lower()
+
+            if "image" not in content_type:
+
+                logger.error("Response is not an image.")
+                logger.error(response.text)
 
                 return {
                     "success": False,
@@ -66,6 +97,8 @@ class HuggingFaceProvider(BaseImageProvider):
                     "model": self.model,
                     "error": response.text,
                 }
+
+            logger.success("Image generated successfully.")
 
             return {
                 "success": True,
@@ -76,6 +109,8 @@ class HuggingFaceProvider(BaseImageProvider):
 
         except httpx.TimeoutException:
 
+            logger.exception("Hugging Face request timed out.")
+
             return {
                 "success": False,
                 "provider": self.name,
@@ -84,6 +119,8 @@ class HuggingFaceProvider(BaseImageProvider):
             }
 
         except Exception as e:
+
+            logger.exception("Unexpected Hugging Face error.")
 
             return {
                 "success": False,
