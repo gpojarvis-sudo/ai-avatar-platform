@@ -1,66 +1,68 @@
-from .huggingface import HuggingFaceProvider
-from .nvidia import NvidiaProvider
-from .gemini import GeminiProvider
+from image_service.providers.huggingface import HuggingFaceProvider
+from image_service.providers.gemini import GeminiProvider
+from image_service.providers.nvidia import NvidiaProvider
 
 
 class ImageProviderManager:
-    """
-    Production Image Provider Manager
-    """
 
     def __init__(self):
 
         self.providers = {
             "huggingface": HuggingFaceProvider(),
-            "nvidia": NvidiaProvider(),
             "gemini": GeminiProvider(),
+            "nvidia": NvidiaProvider(),
         }
-
-        self.fallback_order = [
-            "huggingface",
-            "nvidia",
-            "gemini",
-        ]
 
     async def generate(
         self,
         prompt: str,
+        negative_prompt: str = "",
+        width: int = 1024,
+        height: int = 1024,
+        steps: int = 12,
+        seed: int | None = None,
         provider: str = "huggingface",
-        **kwargs,
+        model: str = "flux-dev",
     ):
 
-        # Try requested provider first
+        provider_order = []
+
         if provider in self.providers:
+            provider_order.append(provider)
 
-            result = await self.providers[
-                provider
-            ].generate(
+        for provider_name in self.providers:
+
+            if provider_name not in provider_order:
+                provider_order.append(provider_name)
+
+        last_error = "Unknown error"
+
+        for provider_name in provider_order:
+
+            provider_instance = self.providers[provider_name]
+
+            result = await provider_instance.generate(
                 prompt=prompt,
-                **kwargs,
+                negative_prompt=negative_prompt,
+                width=width,
+                height=height,
+                steps=steps,
+                seed=seed,
+                model=model,
             )
 
             if result.get("success"):
+
                 return result
 
-        # Automatic fallback
-        for provider_name in self.fallback_order:
-
-            if provider_name == provider:
-                continue
-
-            result = await self.providers[
-                provider_name
-            ].generate(
-                prompt=prompt,
-                **kwargs,
+            last_error = result.get(
+                "error",
+                "Unknown provider error",
             )
-
-            if result.get("success"):
-                return result
 
         return {
             "success": False,
             "provider": provider,
-            "model": None,
-            "error": "All image providers failed."
+            "model": model,
+            "error": last_error,
         }
