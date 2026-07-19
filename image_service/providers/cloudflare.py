@@ -1,4 +1,3 @@
-import base64
 import httpx
 from loguru import logger
 
@@ -11,53 +10,85 @@ class CloudflareProvider(BaseImageProvider):
 
     async def generate(self, prompt: str, **kwargs):
 
-        logger.info("=" * 60)
-        logger.info("Cloudflare Provider Started")
-        logger.info(f"Account ID: {settings.CLOUDFLARE_ACCOUNT_ID}")
-        logger.info(f"Model: {settings.CLOUDFLARE_IMAGE_MODEL}")
-        logger.info(f"Token Length: {len(settings.CLOUDFLARE_API_TOKEN)}")
-        logger.info(f"Token Empty: {not bool(settings.CLOUDFLARE_API_TOKEN)}")
-        logger.info("=" * 60)
-
-        model = settings.CLOUDFLARE_IMAGE_MODEL
+        model = kwargs.get(
+            "model",
+            settings.CLOUDFLARE_IMAGE_MODEL,
+        )
 
         url = (
             f"https://api.cloudflare.com/client/v4/accounts/"
-            f"{settings.CLOUDFLARE_ACCOUNT_ID}/ai/run"
+            f"{settings.CLOUDFLARE_ACCOUNT_ID}"
+            f"/ai/run/{model}"
         )
 
         headers = {
             "Authorization": f"Bearer {settings.CLOUDFLARE_API_TOKEN}",
-            "Content-Type": "application/json",
         }
 
         payload = {
-            "model": model,
-            "input": {
-                "prompt": prompt,
-                "aspect_ratio": kwargs.get("aspect_ratio", "1:1"),
-            },
+            "prompt": prompt,
         }
 
+        if kwargs.get("seed") is not None:
+            payload["seed"] = kwargs["seed"]
+
+        if kwargs.get("steps") is not None:
+            payload["num_steps"] = kwargs["steps"]
+
+        if kwargs.get("width"):
+            payload["width"] = kwargs["width"]
+
+        if kwargs.get("height"):
+            payload["height"] = kwargs["height"]
+
+        logger.info("=" * 60)
+        logger.info("Cloudflare Workers AI")
+        logger.info(f"URL : {url}")
+        logger.info(f"MODEL : {model}")
+        logger.info(f"PAYLOAD : {payload}")
+        logger.info("=" * 60)
+
         try:
+
             async with httpx.AsyncClient(
                 timeout=settings.CLOUDFLARE_TIMEOUT
             ) as client:
+
                 response = await client.post(
                     url,
                     headers=headers,
                     json=payload,
                 )
 
-            logger.info(f"HTTP Status: {response.status_code}")
-            logger.info("FULL RESPONSE")
-            logger.info(response.text)
+            logger.info(f"Status : {response.status_code}")
+            logger.info(f"Content-Type : {response.headers.get('content-type')}")
 
             response.raise_for_status()
 
+            content_type = response.headers.get(
+                "content-type",
+                "",
+            )
+
+            # Image returned directly
+            if content_type.startswith("image/"):
+
+                return {
+                    "success": True,
+                    "provider": self.PROVIDER_NAME,
+                    "model": model,
+                    "image_bytes": response.content,
+                }
+
+            # JSON response
             data = response.json()
 
-            if data.get("state") != "Completed":
+            logger.info(data)
+
+            if (
+                data.get("success") is False
+                or data.get("errors")
+            ):
                 return {
                     "success": False,
                     "provider": self.PROVIDER_NAME,
@@ -65,23 +96,26 @@ class CloudflareProvider(BaseImageProvider):
                     "error": str(data),
                 }
 
-            image = data["result"]["image"]
+            result = data.get("result")
 
-            if not image.startswith("data:image"):
-                raise ValueError("Unexpected image format")
+            if isinstance(result, str):
 
-            image_bytes = base64.b64decode(
-                image.split(",", 1)[1]
-            )
+                return {
+                    "success": True,
+                    "provider": self.PROVIDER_NAME,
+                    "model": model,
+                    "image_bytes": result.encode(),
+                }
 
             return {
-                "success": True,
+                "success": False,
                 "provider": self.PROVIDER_NAME,
                 "model": model,
-                "image_bytes": image_bytes,
+                "error": f"Unexpected response: {data}",
             }
 
         except Exception as e:
+
             logger.exception(e)
 
             return {
