@@ -1,9 +1,9 @@
 from pathlib import Path
 
+from config.settings import settings
+
 from image_service.providers.manager import ImageProviderManager
 from shared.utils import ensure_directory, generate_filename
-
-from config.settings import settings
 
 
 class ImageService:
@@ -21,8 +21,8 @@ class ImageService:
         aspect_ratio: str = "1:1",
         quality: str = "balanced",
         seed: int | None = None,
-        provider: str = "huggingface",
-        model: str = "flux-dev",
+        provider: str | None = None,
+        model: str | None = None,
         extension: str = "png",
     ):
 
@@ -38,7 +38,32 @@ class ImageService:
                 "Unsupported image extension."
             )
 
-        aspect_ratios = {
+        supported_aspect_ratios = [
+            "1:1",
+            "9:16",
+            "16:9",
+            "4:5",
+            "3:2",
+        ]
+
+        if aspect_ratio not in supported_aspect_ratios:
+            aspect_ratio = "1:1"
+
+        if provider is None:
+            provider = settings.DEFAULT_IMAGE_PROVIDER
+
+        if model is None:
+
+            if provider == "cloudflare":
+                model = settings.CLOUDFLARE_IMAGE_MODEL
+
+            elif provider == "huggingface":
+                model = "flux-dev"
+
+            else:
+                model = ""
+
+        aspect_ratio_sizes = {
             "1:1": (1024, 1024),
             "9:16": (768, 1365),
             "16:9": (1365, 768),
@@ -46,16 +71,15 @@ class ImageService:
             "3:2": (1152, 768),
         }
 
-        width, height = aspect_ratios.get(
-            aspect_ratio,
-            (1024, 1024),
-        )
+        width, height = aspect_ratio_sizes[aspect_ratio]
 
-        steps = {
+        quality_steps = {
             "fast": 4,
             "balanced": 12,
             "ultra": 28,
-        }.get(
+        }
+
+        steps = quality_steps.get(
             quality,
             12,
         )
@@ -72,7 +96,6 @@ class ImageService:
         )
 
         if not result["success"]:
-
             return result
 
         filename = generate_filename(extension)
