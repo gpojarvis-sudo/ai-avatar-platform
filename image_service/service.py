@@ -1,0 +1,57 @@
+from pathlib import Path
+
+from shared.logger import logger
+from shared.utils import ensure_directory, generate_filename
+from shared.constants import SUPPORTED_IMAGE_FORMATS
+
+
+class ImageService:
+    """
+    Basic Image Service (MVP)
+
+    Currently creates metadata only.
+    In the next phase this service will connect to
+    Gemini / NVIDIA / FLUX providers.
+    """
+
+    def __init__(self):
+        self.output_dir = ensure_directory("static/images")
+
+    async def generate(
+        self,
+        prompt: str,
+        provider: str = "gemini",
+        extension: str = "png",
+    ):
+        if extension.lower() not in SUPPORTED_IMAGE_FORMATS:
+            raise ValueError(
+                f"Unsupported image format: {extension}"
+            )
+
+        filename = generate_filename(
+            extension=extension,
+            prefix="image",
+        )
+
+        output_path = Path(self.output_dir) / filename
+
+        logger.info(
+            f"Image generation requested using '{provider}'"
+        )
+
+        logger.info(f"Prompt: {prompt}")
+
+        return {
+            "success": True,
+            "provider": provider,
+            "prompt": prompt,
+            "filename": filename,
+            "output_path": str(output_path),
+            "message": (
+                "Image provider integration "
+                "will be added in the next step."
+            ),
+        }
+
+
+image_service = ImageService()
