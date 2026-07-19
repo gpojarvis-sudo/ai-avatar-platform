@@ -3,7 +3,7 @@ from pathlib import Path
 from shared.logger import logger
 from shared.utils import ensure_directory, generate_filename
 from shared.constants import SUPPORTED_IMAGE_FORMATS
-
+from image_service.providers.manager import ImageProviderManager
 
 class ImageService:
     """
@@ -16,7 +16,7 @@ class ImageService:
 
     def __init__(self):
         self.output_dir = ensure_directory("static/images")
-
+self.provider_manager = ImageProviderManager()
     async def generate(
         self,
         prompt: str,
