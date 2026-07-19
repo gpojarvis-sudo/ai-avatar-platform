@@ -3,12 +3,14 @@ from pathlib import Path
 from shared.logger import logger
 from shared.utils import ensure_directory, generate_filename
 from shared.constants import SUPPORTED_IMAGE_FORMATS
+
+from config.settings import settings
 from image_service.providers.manager import ImageProviderManager
 
 
 class ImageService:
     """
-    Basic Image Service (MVP)
+    Production Image Service
     """
 
     def __init__(self):
@@ -18,13 +20,27 @@ class ImageService:
     async def generate(
         self,
         prompt: str,
-        provider: str = "gemini",
+        provider: str = "huggingface",
         extension: str = "png",
     ):
-        if extension.lower() not in SUPPORTED_IMAGE_FORMATS:
+
+        extension = extension.lower()
+
+        if extension not in SUPPORTED_IMAGE_FORMATS:
             raise ValueError(
                 f"Unsupported image format: {extension}"
             )
+
+        logger.info(f"Provider : {provider}")
+        logger.info(f"Prompt   : {prompt}")
+
+        result = await self.provider_manager.generate(
+            prompt=prompt,
+            provider=provider,
+        )
+
+        if not result.get("success"):
+            return result
 
         filename = generate_filename(
             extension=extension,
@@ -33,27 +49,23 @@ class ImageService:
 
         output_path = Path(self.output_dir) / filename
 
-        logger.info(
-            f"Image generation requested using '{provider}'"
+        with open(output_path, "wb") as image_file:
+            image_file.write(result["image_bytes"])
+
+        image_url = (
+            "https://ai-avatar-platform-production.up.railway.app"
+            f"/static/images/{filename}"
         )
 
-        logger.info(f"Prompt: {prompt}")
-
-        provider_result = await self.provider_manager.generate(
-            prompt=prompt
-        )
-
-        logger.info(
-            f"Provider Manager Result: {provider_result}"
-        )
+        logger.info(f"Image Saved : {output_path}")
 
         return {
             "success": True,
-            "provider": provider,
+            "provider": result["provider"],
+            "model": result["model"],
             "prompt": prompt,
             "filename": filename,
-            "output_path": str(output_path),
-            "provider_result": provider_result,
+            "image_url": image_url,
         }
 
 
