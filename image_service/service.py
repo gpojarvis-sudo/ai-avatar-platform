@@ -1,104 +1,104 @@
 from pathlib import Path
 
+from image_service.providers.manager import ImageProviderManager
+from shared.utils import ensure_directory, generate_filename
+
 from config.settings import settings
-
-from shared.logger import logger
-from shared.utils import (
-    ensure_directory,
-    generate_filename,
-)
-from shared.constants import SUPPORTED_IMAGE_FORMATS
-
-from image_service.providers.manager import (
-    ImageProviderManager,
-)
 
 
 class ImageService:
-    """
-    Production Image Service
-    """
 
     def __init__(self):
 
-        self.output_dir = ensure_directory(
-            "static/images"
-        )
+        self.provider_manager = ImageProviderManager()
 
-        self.provider_manager = (
-            ImageProviderManager()
-        )
+        ensure_directory("static/images")
 
     async def generate(
         self,
         prompt: str,
+        negative_prompt: str = "",
+        aspect_ratio: str = "1:1",
+        quality: str = "balanced",
+        seed: int | None = None,
         provider: str = "huggingface",
+        model: str = "flux-dev",
         extension: str = "png",
     ):
 
         extension = extension.lower()
 
-        if extension not in SUPPORTED_IMAGE_FORMATS:
-
+        if extension not in [
+            "png",
+            "jpg",
+            "jpeg",
+            "webp",
+        ]:
             raise ValueError(
-                f"Unsupported image format: {extension}"
+                "Unsupported image extension."
             )
 
-        logger.info(
-            f"Image generation started using {provider}"
+        aspect_ratios = {
+            "1:1": (1024, 1024),
+            "9:16": (768, 1365),
+            "16:9": (1365, 768),
+            "4:5": (1024, 1280),
+            "3:2": (1152, 768),
+        }
+
+        width, height = aspect_ratios.get(
+            aspect_ratio,
+            (1024, 1024),
+        )
+
+        steps = {
+            "fast": 4,
+            "balanced": 12,
+            "ultra": 28,
+        }.get(
+            quality,
+            12,
         )
 
         result = await self.provider_manager.generate(
             prompt=prompt,
+            negative_prompt=negative_prompt,
+            width=width,
+            height=height,
+            steps=steps,
+            seed=seed,
             provider=provider,
+            model=model,
         )
 
-        if not result.get("success"):
+        if not result["success"]:
+
             return result
 
-        filename = generate_filename(
-            extension=extension,
-            prefix="image",
+        filename = generate_filename(extension)
+
+        output_path = Path(
+            "static/images"
+        ) / filename
+
+        output_path.write_bytes(
+            result["image_bytes"]
         )
-
-        output_path = (
-            Path(self.output_dir)
-            / filename
-        )
-
-        with open(
-            output_path,
-            "wb",
-        ) as image_file:
-
-            image_file.write(
-                result["image_bytes"]
-            )
 
         image_url = (
-            "https://ai-avatar-platform-production.up.railway.app"
+            f"{settings.PUBLIC_BASE_URL}"
             f"/static/images/{filename}"
         )
 
-        logger.success(
-            f"Image saved : {output_path}"
-        )
-
         return {
-
             "success": True,
-
             "provider": result["provider"],
-
             "model": result["model"],
-
             "prompt": prompt,
-
+            "negative_prompt": negative_prompt,
+            "aspect_ratio": aspect_ratio,
+            "quality": quality,
+            "seed": seed,
             "filename": filename,
-
             "image_url": image_url,
-
         }
-
-
-image_service = ImageService()
