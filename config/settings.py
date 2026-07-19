@@ -7,19 +7,31 @@ class Settings(BaseSettings):
     # ======================================================
 
     APP_NAME: str = "AI Avatar Platform"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "1.0.0"
+
     DEBUG: bool = True
 
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
     # ======================================================
+    # Public URL
+    # ======================================================
+
+    PUBLIC_BASE_URL: str = (
+        "https://ai-avatar-platform-production.up.railway.app"
+    )
+
+    # ======================================================
     # AI Providers
     # ======================================================
 
     HUGGINGFACE_API_KEY: str = ""
+
     NVIDIA_API_KEY: str = ""
+
     GEMINI_API_KEY: str = ""
+
     GROQ_API_KEY: str = ""
 
     # ======================================================
@@ -27,6 +39,7 @@ class Settings(BaseSettings):
     # ======================================================
 
     DEFAULT_IMAGE_PROVIDER: str = "huggingface"
+
     DEFAULT_LLM_PROVIDER: str = "groq"
 
     REQUEST_TIMEOUT: int = 60
@@ -35,9 +48,9 @@ class Settings(BaseSettings):
     # Hugging Face
     # ======================================================
 
-    HUGGINGFACE_MODEL: str = "black-forest-labs/FLUX.1-schnell"
-
-    HUGGINGFACE_IMAGE_MODEL: str = "black-forest-labs/FLUX.1-dev"
+    HUGGINGFACE_MODEL: str = (
+        "black-forest-labs/FLUX.1-schnell"
+    )
 
     HUGGINGFACE_BASE_URL: str = (
         "https://router.huggingface.co/hf-inference/models"
