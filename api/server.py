@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from image_service.routes import router as image_router
 from tts_service.routes import router as tts_router
@@ -29,7 +32,23 @@ def create_app() -> FastAPI:
             "version": "1.0.0"
         }
 
+    # --------------------------------------------------
+    # Create Static Directories
+    # --------------------------------------------------
+    Path("static/images").mkdir(parents=True, exist_ok=True)
+
+    # --------------------------------------------------
+    # Serve Static Files
+    # --------------------------------------------------
+    app.mount(
+        "/static",
+        StaticFiles(directory="static"),
+        name="static",
+    )
+
+    # --------------------------------------------------
     # Register API Routes
+    # --------------------------------------------------
     app.include_router(image_router, prefix="/api/v1")
     app.include_router(tts_router, prefix="/api/v1")
     app.include_router(avatar_router, prefix="/api/v1")
