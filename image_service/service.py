@@ -40,7 +40,13 @@ self.provider_manager = ImageProviderManager()
         )
 
         logger.info(f"Prompt: {prompt}")
+provider_result = await self.provider_manager.generate(
+    prompt=prompt
+)
 
+logger.info(
+    f"Provider Manager Result: {provider_result}"
+)
         return {
             "success": True,
             "provider": provider,
