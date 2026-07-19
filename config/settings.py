@@ -34,7 +34,11 @@ class Settings(BaseSettings):
     DEFAULT_LLM_PROVIDER: str = "groq"
 
     REQUEST_TIMEOUT: int = 60
+HUGGINGFACE_MODEL: str = "black-forest-labs/FLUX.1-schnell"
 
+HUGGINGFACE_BASE_URL: str = "https://router.huggingface.co/hf-inference/models"
+
+HUGGINGFACE_TIMEOUT: int = 120
     # ======================================================
     # Environment
     # ======================================================
