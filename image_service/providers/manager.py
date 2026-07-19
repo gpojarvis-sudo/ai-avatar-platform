@@ -25,44 +25,33 @@ class ImageProviderManager:
         model: str = "flux-dev",
     ):
 
-        provider_order = []
+        # -------------------------------
+        # Validate Provider
+        # -------------------------------
 
-        if provider in self.providers:
-            provider_order.append(provider)
+        if provider not in self.providers:
 
-        for provider_name in self.providers:
+            return {
+                "success": False,
+                "provider": provider,
+                "model": model,
+                "error": f"Unknown provider: {provider}",
+            }
 
-            if provider_name not in provider_order:
-                provider_order.append(provider_name)
+        # -------------------------------
+        # Call Only Requested Provider
+        # -------------------------------
 
-        last_error = "Unknown error"
+        provider_instance = self.providers[provider]
 
-        for provider_name in provider_order:
+        result = await provider_instance.generate(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            width=width,
+            height=height,
+            steps=steps,
+            seed=seed,
+            model=model,
+        )
 
-            provider_instance = self.providers[provider_name]
-
-            result = await provider_instance.generate(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                width=width,
-                height=height,
-                steps=steps,
-                seed=seed,
-                model=model,
-            )
-
-            if result.get("success"):
-
-                return result
-
-            last_error = result.get(
-                "error",
-                "Unknown provider error",
-            )
-
-        return {
-            "success": False,
-            "provider": provider,
-            "model": model,
-            "error": last_error,
-        }
+        return result
