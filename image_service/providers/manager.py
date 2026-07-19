@@ -1,3 +1,6 @@
+from config.settings import settings
+
+from image_service.providers.cloudflare import CloudflareProvider
 from image_service.providers.huggingface import HuggingFaceProvider
 from image_service.providers.gemini import GeminiProvider
 from image_service.providers.nvidia import NvidiaProvider
@@ -8,6 +11,7 @@ class ImageProviderManager:
     def __init__(self):
 
         self.providers = {
+            "cloudflare": CloudflareProvider(),
             "huggingface": HuggingFaceProvider(),
             "gemini": GeminiProvider(),
             "nvidia": NvidiaProvider(),
@@ -21,13 +25,26 @@ class ImageProviderManager:
         height: int = 1024,
         steps: int = 12,
         seed: int | None = None,
-        provider: str = "huggingface",
-        model: str = "flux-dev",
+        provider: str | None = None,
+        model: str | None = None,
     ):
 
-        # -------------------------------
+        # ----------------------------------
+        # Default Provider
+        # ----------------------------------
+
+        if provider is None:
+            provider = settings.DEFAULT_IMAGE_PROVIDER
+
+        if model is None:
+            if provider == "cloudflare":
+                model = settings.CLOUDFLARE_IMAGE_MODEL
+            else:
+                model = "flux-dev"
+
+        # ----------------------------------
         # Validate Provider
-        # -------------------------------
+        # ----------------------------------
 
         if provider not in self.providers:
 
@@ -38,9 +55,9 @@ class ImageProviderManager:
                 "error": f"Unknown provider: {provider}",
             }
 
-        # -------------------------------
-        # Call Only Requested Provider
-        # -------------------------------
+        # ----------------------------------
+        # Generate Image
+        # ----------------------------------
 
         provider_instance = self.providers[provider]
 
