@@ -31,18 +31,41 @@ class HuggingFaceProvider(BaseImageProvider):
 
         try:
 
-            logger.info(
-                f"Provider : {settings.HUGGINGFACE_PROVIDER}"
-            )
+            logger.info(f"Provider : {settings.HUGGINGFACE_PROVIDER}")
+            logger.info(f"Model : {self.model}")
 
-            logger.info(
-                f"Model : {self.model}"
-            )
+            # --------------------------------------------------
+            # Dynamic Steps
+            # --------------------------------------------------
+
+            steps = kwargs.get("steps", 30)
+
+            # --------------------------------------------------
+            # Prompt Enhancement
+            # --------------------------------------------------
+
+            enhanced_prompt = f"""
+{prompt}
+
+ultra realistic,
+masterpiece,
+best quality,
+8k UHD,
+extremely detailed,
+sharp focus,
+professional photography,
+highly detailed face,
+highly detailed eyes,
+natural skin texture,
+HDR,
+cinematic lighting,
+award winning photography
+""".strip()
 
             image: Image.Image = await self.client.text_to_image(
-                prompt=prompt,
+                prompt=enhanced_prompt,
                 model=self.model,
-                num_inference_steps=4,
+                num_inference_steps=steps,
             )
 
             buffer = BytesIO()
@@ -51,6 +74,8 @@ class HuggingFaceProvider(BaseImageProvider):
                 buffer,
                 format="PNG",
             )
+
+            logger.success("Image generated successfully")
 
             return {
                 "success": True,
