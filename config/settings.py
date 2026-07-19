@@ -39,6 +39,7 @@ HUGGINGFACE_MODEL: str = "black-forest-labs/FLUX.1-schnell"
 HUGGINGFACE_BASE_URL: str = "https://router.huggingface.co/hf-inference/models"
 
 HUGGINGFACE_TIMEOUT: int = 120
+HUGGINGFACE_IMAGE_MODEL: str = "black-forest-labs/FLUX.1-dev"
     # ======================================================
     # Environment
     # ======================================================
