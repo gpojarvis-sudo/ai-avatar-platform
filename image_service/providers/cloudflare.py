@@ -40,7 +40,9 @@ class CloudflareProvider(BaseImageProvider):
         }
 
         try:
-            async with httpx.AsyncClient(timeout=settings.CLOUDFLARE_TIMEOUT) as client:
+            async with httpx.AsyncClient(
+                timeout=settings.CLOUDFLARE_TIMEOUT
+            ) as client:
                 response = await client.post(
                     url,
                     headers=headers,
@@ -49,7 +51,7 @@ class CloudflareProvider(BaseImageProvider):
 
             logger.info(f"HTTP Status: {response.status_code}")
             logger.info("FULL RESPONSE")
-logger.info(response.text)
+            logger.info(response.text)
 
             response.raise_for_status()
 
@@ -68,7 +70,9 @@ logger.info(response.text)
             if not image.startswith("data:image"):
                 raise ValueError("Unexpected image format")
 
-            image_bytes = base64.b64decode(image.split(",", 1)[1])
+            image_bytes = base64.b64decode(
+                image.split(",", 1)[1]
+            )
 
             return {
                 "success": True,
