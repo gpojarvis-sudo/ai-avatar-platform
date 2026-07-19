@@ -4,6 +4,12 @@ from config.settings import settings
 
 from tts_service.providers.base import BaseTTSProvider
 
+from tts_service.providers.elevenlabs import ElevenLabsProvider
+# Future Providers
+# from tts_service.providers.edge_tts import EdgeTTSProvider
+# from tts_service.providers.kokoro import KokoroProvider
+# from tts_service.providers.gemini import GeminiProvider
+
 
 class TTSProviderManager:
     """
@@ -17,6 +23,21 @@ class TTSProviderManager:
 
     def __init__(self):
         self._providers: Dict[str, BaseTTSProvider] = {}
+
+        # Register Providers
+        self._register_providers()
+
+    def _register_providers(self) -> None:
+        """
+        Register all available providers.
+        """
+
+        self.register(ElevenLabsProvider())
+
+        # Register future providers here
+        # self.register(EdgeTTSProvider())
+        # self.register(KokoroProvider())
+        # self.register(GeminiProvider())
 
     def register(self, provider: BaseTTSProvider) -> None:
         """
@@ -36,8 +57,11 @@ class TTSProviderManager:
         ).lower()
 
         if provider not in self._providers:
+            available = ", ".join(self.available())
+
             raise ValueError(
-                f"TTS provider '{provider}' is not registered."
+                f"TTS provider '{provider}' is not registered. "
+                f"Available providers: {available}"
             )
 
         return self._providers[provider]
@@ -58,10 +82,14 @@ class TTSProviderManager:
         for name, provider in self._providers.items():
             try:
                 result[name] = await provider.health_check()
-            except Exception:
-                result[name] = False
+            except Exception as e:
+                result[name] = {
+                    "healthy": False,
+                    "error": str(e)
+                }
 
         return result
 
 
+# Singleton Instance
 provider_manager = TTSProviderManager()
