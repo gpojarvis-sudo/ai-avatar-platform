@@ -2,12 +2,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+
     # ======================================================
     # Application
     # ======================================================
 
     APP_NAME: str = "AI Avatar Platform"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "2.0.0"
 
     DEBUG: bool = True
 
@@ -23,19 +24,38 @@ class Settings(BaseSettings):
     )
 
     # ======================================================
-    # AI Providers
+    # Hugging Face
     # ======================================================
 
     HUGGINGFACE_API_KEY: str = ""
 
-    NVIDIA_API_KEY: str = ""
+    # Router Provider
+    # auto
+    # fal-ai
+    # together
+    # novita
+    # replicate
+
+    HUGGINGFACE_PROVIDER: str = "auto"
+
+    HUGGINGFACE_MODEL: str = (
+        "black-forest-labs/FLUX.1-dev"
+    )
+
+    HUGGINGFACE_TIMEOUT: int = 120
+
+    # ======================================================
+    # Other Providers
+    # ======================================================
 
     GEMINI_API_KEY: str = ""
+
+    NVIDIA_API_KEY: str = ""
 
     GROQ_API_KEY: str = ""
 
     # ======================================================
-    # Default Providers
+    # Defaults
     # ======================================================
 
     DEFAULT_IMAGE_PROVIDER: str = "huggingface"
@@ -43,20 +63,6 @@ class Settings(BaseSettings):
     DEFAULT_LLM_PROVIDER: str = "groq"
 
     REQUEST_TIMEOUT: int = 60
-
-    # ======================================================
-    # Hugging Face
-    # ======================================================
-
-    HUGGINGFACE_MODEL: str = (
-        "black-forest-labs/FLUX.1-schnell"
-    )
-
-    HUGGINGFACE_BASE_URL: str = (
-        "https://router.huggingface.co/hf-inference/models"
-    )
-
-    HUGGINGFACE_TIMEOUT: int = 120
 
     # ======================================================
     # Environment
