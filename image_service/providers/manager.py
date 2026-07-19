@@ -1,4 +1,6 @@
 from .huggingface import HuggingFaceProvider
+from .nvidia import NvidiaProvider
+from .gemini import GeminiProvider
 
 
 class ImageProviderManager:
@@ -9,14 +11,21 @@ class ImageProviderManager:
     def __init__(self):
         self.providers = [
             HuggingFaceProvider(),
+            NvidiaProvider(),
+            GeminiProvider(),
         ]
 
     async def generate(self, prompt: str, **kwargs):
         """
-        Try providers one by one until one succeeds.
+        Try each provider until one succeeds.
         """
 
-        last_result = None
+        last_result = {
+            "success": False,
+            "provider": None,
+            "image_url": None,
+            "error": "No provider available."
+        }
 
         for provider in self.providers:
 
