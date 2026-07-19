@@ -48,7 +48,8 @@ class CloudflareProvider(BaseImageProvider):
                 )
 
             logger.info(f"HTTP Status: {response.status_code}")
-            logger.info(f"Response: {response.text[:500]}")
+            logger.info("FULL RESPONSE")
+logger.info(response.text)
 
             response.raise_for_status()
 
