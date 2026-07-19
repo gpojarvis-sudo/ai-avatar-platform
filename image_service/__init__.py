@@ -1,9 +1,9 @@
-"""
-Image Service Package
-"""
-
-from .service import image_service
+from .base import BaseImageProvider
+from .huggingface import HuggingFaceProvider
+from .manager import ImageProviderManager
 
 __all__ = [
-    "image_service",
+    "BaseImageProvider",
+    "HuggingFaceProvider",
+    "ImageProviderManager",
 ]
