@@ -1,5 +1,7 @@
-import httpx
+import json
 from typing import Any, Dict
+
+import httpx
 from loguru import logger
 
 from config.settings import settings
@@ -8,7 +10,8 @@ from .base import BaseImageProvider
 
 class HuggingFaceProvider(BaseImageProvider):
     """
-    Hugging Face FLUX Image Generation Provider
+    Hugging Face Image Provider
+    Production Debug Version
     """
 
     name = "huggingface"
@@ -22,7 +25,7 @@ class HuggingFaceProvider(BaseImageProvider):
     async def generate(
         self,
         prompt: str,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
 
         if not self.api_key:
@@ -32,7 +35,7 @@ class HuggingFaceProvider(BaseImageProvider):
                 "success": False,
                 "provider": self.name,
                 "model": self.model,
-                "error": "HUGGINGFACE_API_KEY is not configured."
+                "error": "HUGGINGFACE_API_KEY is not configured.",
             }
 
         url = f"{self.base_url}/{self.model}"
@@ -40,6 +43,7 @@ class HuggingFaceProvider(BaseImageProvider):
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Accept": "image/png",
+            "Content-Type": "application/json",
         }
 
         payload = {
@@ -49,8 +53,11 @@ class HuggingFaceProvider(BaseImageProvider):
             }
         }
 
-        logger.info(f"Using HuggingFace model : {self.model}")
+        logger.info("=" * 70)
+        logger.info("HUGGING FACE REQUEST START")
         logger.info(f"Endpoint : {url}")
+        logger.info(f"Model    : {self.model}")
+        logger.info(f"Prompt   : {prompt}")
 
         try:
 
@@ -64,41 +71,69 @@ class HuggingFaceProvider(BaseImageProvider):
                     json=payload,
                 )
 
-            logger.info(f"HTTP Status : {response.status_code}")
+            logger.info("=" * 70)
+            logger.info("HUGGING FACE RESPONSE")
+            logger.info(f"Status Code : {response.status_code}")
             logger.info(
                 f"Content-Type : {response.headers.get('content-type')}"
             )
+            logger.info(f"Headers : {dict(response.headers)}")
+
+            body = response.text
+
+            if len(body) > 4000:
+                body = body[:4000]
+
+            logger.info(f"Body : {body}")
 
             if response.status_code != 200:
 
-                logger.error("Hugging Face returned non-200 response.")
-                logger.error(response.text)
+                try:
+                    error_json = response.json()
+                    error_message = json.dumps(
+                        error_json,
+                        indent=2
+                    )
+                except Exception:
+                    error_message = response.text
+
+                logger.error(
+                    f"Hugging Face HTTP Error {response.status_code}"
+                )
 
                 return {
                     "success": False,
                     "provider": self.name,
                     "model": self.model,
-                    "error": f"HTTP {response.status_code}: {response.text}",
+                    "error": (
+                        f"HTTP {response.status_code}\n"
+                        f"{error_message}"
+                    ),
                 }
 
-            content_type = response.headers.get(
-                "content-type",
-                ""
-            ).lower()
+            content_type = (
+                response.headers
+                .get("content-type", "")
+                .lower()
+            )
 
             if "image" not in content_type:
 
-                logger.error("Response is not an image.")
-                logger.error(response.text)
+                logger.error(
+                    "Expected image but received non-image response."
+                )
 
                 return {
                     "success": False,
                     "provider": self.name,
                     "model": self.model,
-                    "error": response.text,
+                    "error": body,
                 }
 
-            logger.success("Image generated successfully.")
+            logger.success(
+                f"Image generated successfully "
+                f"({len(response.content)} bytes)"
+            )
 
             return {
                 "success": True,
@@ -115,12 +150,23 @@ class HuggingFaceProvider(BaseImageProvider):
                 "success": False,
                 "provider": self.name,
                 "model": self.model,
-                "error": "Request timed out."
+                "error": "Request timed out.",
+            }
+
+        except httpx.HTTPError as e:
+
+            logger.exception("HTTP Client Error")
+
+            return {
+                "success": False,
+                "provider": self.name,
+                "model": self.model,
+                "error": str(e),
             }
 
         except Exception as e:
 
-            logger.exception("Unexpected Hugging Face error.")
+            logger.exception("Unexpected Hugging Face Exception")
 
             return {
                 "success": False,
