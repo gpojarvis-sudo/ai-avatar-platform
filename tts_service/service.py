@@ -1,61 +1,44 @@
-from pathlib import Path
-
-from shared.logger import logger
-from shared.utils import ensure_directory, generate_filename
-from shared.constants import SUPPORTED_AUDIO_FORMATS
+from tts_service.providers.manager import provider_manager
+from tts_service.schemas import (
+    TTSRequest,
+    TTSResponse,
+)
 
 
 class TTSService:
     """
-    Basic Text-to-Speech Service (MVP)
-
-    Currently returns metadata only.
-    Real Gemini / ElevenLabs / NVIDIA integration
-    will be added later.
+    Business logic layer for TTS generation.
     """
-
-    def __init__(self):
-        self.output_dir = ensure_directory("static/audio")
 
     async def generate(
         self,
-        text: str,
-        voice: str = "default",
-        provider: str = "gemini",
-        extension: str = "mp3",
-    ):
+        request: TTSRequest,
+    ) -> TTSResponse:
+        """
+        Generate speech using the selected provider.
+        """
 
-        if extension.lower() not in SUPPORTED_AUDIO_FORMATS:
-            raise ValueError(
-                f"Unsupported audio format: {extension}"
-            )
-
-        filename = generate_filename(
-            extension=extension,
-            prefix="tts",
+        provider = provider_manager.get(
+            request.provider
         )
 
-        output_path = Path(self.output_dir) / filename
+        return await provider.generate(request)
 
-        logger.info(
-            f"TTS requested using '{provider}'"
-        )
+    async def get_available_providers(
+        self,
+    ) -> list[str]:
+        """
+        Get all registered providers.
+        """
 
-        logger.info(f"Voice : {voice}")
-        logger.info(f"Text : {text}")
+        return provider_manager.available()
 
-        return {
-            "success": True,
-            "provider": provider,
-            "voice": voice,
-            "text": text,
-            "filename": filename,
-            "output_path": str(output_path),
-            "message": (
-                "TTS provider integration "
-                "will be added in the next step."
-            ),
-        }
+    async def health(self) -> dict:
+        """
+        Health status of all providers.
+        """
+
+        return await provider_manager.health()
 
 
 tts_service = TTSService()
