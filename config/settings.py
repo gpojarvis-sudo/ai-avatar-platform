@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # ======================================================
 
     APP_NAME: str = "AI Avatar Platform"
-    APP_VERSION: str = "2.0.0"
+    APP_VERSION: str = "2.1.0"
 
     DEBUG: bool = True
 
@@ -24,17 +24,22 @@ class Settings(BaseSettings):
     )
 
     # ======================================================
-    # Hugging Face
+    # Cloudflare Workers AI
+    # ======================================================
+
+    CLOUDFLARE_ACCOUNT_ID: str = ""
+
+    CLOUDFLARE_API_TOKEN: str = ""
+
+    CLOUDFLARE_IMAGE_MODEL: str = "p-image"
+
+    CLOUDFLARE_TIMEOUT: int = 180
+
+    # ======================================================
+    # Hugging Face (Fallback)
     # ======================================================
 
     HUGGINGFACE_API_KEY: str = ""
-
-    # Router Provider
-    # auto
-    # fal-ai
-    # together
-    # novita
-    # replicate
 
     HUGGINGFACE_PROVIDER: str = "auto"
 
@@ -58,7 +63,7 @@ class Settings(BaseSettings):
     # Defaults
     # ======================================================
 
-    DEFAULT_IMAGE_PROVIDER: str = "huggingface"
+    DEFAULT_IMAGE_PROVIDER: str = "cloudflare"
 
     DEFAULT_LLM_PROVIDER: str = "groq"
 
